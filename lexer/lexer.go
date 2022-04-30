@@ -9,6 +9,7 @@ type Lexer struct {
 	ch           byte // 現在検査中の文字
 }
 
+//Lexerを初期化する
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
@@ -25,12 +26,32 @@ func (l *Lexer) readChar() {
 	l.readPosition += 1
 }
 
+//実際に受け取ったインプットを読み込んでTokenに変換する。
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 	l.skipWhitespace()
 	switch l.ch {
 	case '=':
-		tok = newToken(token.ASSIGN, l.ch)
+		if l.peekChar() == "=" {
+			curCh := l.ch
+			l.readChar()
+
+			literal := string(curCh) + string(l.ch)
+			tok = token.Token{Type: token.EQ, Literal: literal}
+		} else {
+			tok = newToken(token.ASSIGN, l.ch)
+		}
+	case '!':
+		if l.peekChar() == "=" {
+			curCh := l.ch
+			l.readChar()
+
+			literal := string(curCh) + string(l.ch)
+			tok = token.Token{Type: token.NOT_EQ, Literal: literal}
+		} else {
+			tok = newToken(token.BANG, l.ch)
+		}
+
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case '(':
@@ -47,8 +68,7 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
-	case '!':
-		tok = newToken(token.BANG, l.ch)
+
 	case '/':
 		tok = newToken(token.SLASH, l.ch)
 	case '*':
@@ -99,6 +119,9 @@ func (l *Lexer) readNumber() string {
 	}
 	return l.input[startPosition:l.position]
 
+}
+func (l *Lexer) peekChar() string {
+	return string(l.input[l.readPosition])
 }
 
 func isLetter(ch byte) bool {
